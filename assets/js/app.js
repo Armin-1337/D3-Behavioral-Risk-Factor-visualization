@@ -1,5 +1,3 @@
-// D3 Animated Scatter Plot
-
 // Section 1: Pre-Data Setup
 // ===========================
 
@@ -38,9 +36,8 @@ function crGet() {
 }
 crGet();
 
-// We create a group element to nest our bottom axes labels.
+// create a group element to nest our bottom axes labels.
 svg.append("g").attr("class", "xText");
-// xText will allows us to select the group without excess code.
 var xText = d3.select(".xText");
 
 function xTextRefresh() {
@@ -81,19 +78,12 @@ xText
   .attr("class", "aText inactive x")
   .text("Household Income (Median)");
 
-
-// Specifying the variables like this allows us to make our transform attributes more readable.
 var leftTextX = margin + tPadLeft;
 var leftTextY = (height + labelArea) / 2 - labelArea;
 
-// We add a second label group, this time for the axis left of the chart.
+// add a second label group, this time for the axis left of the chart.
 svg.append("g").attr("class", "yText");
-
-// yText will allows us to select the group without excess code.
 var yText = d3.select(".yText");
-
-// Like before, we nest the group's transform attr in a function
-// to make changing it on window change an easy operation.
 function yTextRefresh() {
   yText.attr(
     "transform",
@@ -102,7 +92,7 @@ function yTextRefresh() {
 }
 yTextRefresh();
 
-// Now we append the text.
+// append the text.
 // 1. Obesity
 yText
   .append("text")
@@ -129,4 +119,80 @@ yText
   .attr("data-axis", "y")
   .attr("class", "aText inactive y")
   .text("Lacks Healthcare (%)");
+  
+// 2. Import .csv file.
+// ========================
+d3.csv("assets/data/data.csv").then(function(data) {
+  visualize(data);
+});
 
+// 3. Create visualization function
+// ===================================
+function visualize(theData) {
+  // PART 1: Essential Local Variables and Functions
+  // =================================
+  // curX and curY will determine what data gets represented in each axis.
+  var curX = "poverty";
+  var curY = "obesity";
+  var xMin;
+  var xMax;
+  var yMin;
+  var yMax;
+
+  // function for tooltip.
+  var toolTip = d3
+    .tip()
+    .attr("class", "d3-tip")
+    .offset([40, -60])
+    .html(function(d) {
+      var theX;
+      var theState = "<div>" + d.state + "</div>";
+      var theY = "<div>" + curY + ": " + d[curY] + "%</div>";
+      if (curX === "poverty") {
+        theX = "<div>" + curX + ": " + d[curX] + "%</div>";
+      }
+      else {
+        theX = "<div>" +
+          curX +
+          ": " +
+          parseFloat(d[curX]).toLocaleString("en") +
+          "</div>";
+      }
+      return theState + theX + theY;
+    });
+  svg.call(toolTip);
+
+  // PART 2: D.R.Y
+  // ==============
+
+  // a. min and max change for x
+  function xMinMax() {
+    xMin = d3.min(theData, function(d) {
+      return parseFloat(d[curX]) * 0.90;
+    });
+    xMax = d3.max(theData, function(d) {
+      return parseFloat(d[curX]) * 1.10;
+    });
+  }
+
+  // b. min and max change for y
+  function yMinMax() {
+    yMin = d3.min(theData, function(d) {
+      return parseFloat(d[curY]) * 0.90;
+    });
+    yMax = d3.max(theData, function(d) {
+      return parseFloat(d[curY]) * 1.10;
+    });
+  }
+
+  // c. change the classes (and appearance) of label text when clicked.
+  function labelChange(axis, clickedText) {
+    d3
+      .selectAll(".aText")
+      .filter("." + axis)
+      .filter(".active")
+      .classed("active", false)
+      .classed("inactive", true);
+
+    clickedText.classed("inactive", false).classed("active", true);
+  }
