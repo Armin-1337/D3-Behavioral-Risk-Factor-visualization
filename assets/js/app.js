@@ -129,6 +129,7 @@ d3.csv("assets/data/data.csv").then(function(data) {
 // 3. Create visualization function
 // ===================================
 function visualize(theData) {
+	
   // PART 1: Essential Local Variables and Functions
   // =================================
   // curX and curY will determine what data gets represented in each axis.
@@ -294,3 +295,76 @@ function visualize(theData) {
       toolTip.hide(d);
       d3.select("." + d.abbr).style("stroke", "#e3e3e3");
     });
+
+  // Part 4: Make the Graph Dynamic
+  // ==========================
+  // This section will allow the user to click on any label and display the data it references.
+
+  d3.selectAll(".aText").on("click", function() {
+    var self = d3.select(this);
+    // Only want to run this on inactive labels.
+    // It's a waste of the processor to execute the function
+    // if the data is already displayed on the graph.
+    if (self.classed("inactive")) {
+      var axis = self.attr("data-axis");
+      var name = self.attr("data-name");
+	  
+      if (axis === "x") {
+        curX = name;
+        xMinMax();
+        xScale.domain([xMin, xMax]);
+        svg.select(".xAxis").transition().duration(300).call(xAxis);
+        d3.selectAll("circle").each(function() {
+          // Each state circle gets a transition for it's new attribute.
+          // This will lend the circle a motion tween
+          // from it's original spot to the new location.
+          d3
+            .select(this)
+            .transition()
+            .attr("cx", function(d) {
+              return xScale(d[curX]);
+            })
+            .duration(300);
+        });
+
+        // Change the location of the state texts.
+        d3.selectAll(".stateText").each(function() {
+          d3
+            .select(this)
+            .transition()
+            .attr("dx", function(d) {
+              return xScale(d[curX]);
+            })
+            .duration(300);
+        });
+        labelChange(axis, self);
+      }
+      else {
+        // accounting for y:
+        curY = name;
+        yMinMax();
+        yScale.domain([yMin, yMax]);
+        svg.select(".yAxis").transition().duration(300).call(yAxis);
+        d3.selectAll("circle").each(function() {
+          d3
+            .select(this)
+            .transition()
+            .attr("cy", function(d) {
+              return yScale(d[curY]);
+            })
+            .duration(300);
+        });
+		
+        d3.selectAll(".stateText").each(function() {
+          d3
+            .select(this)
+            .transition()
+            .attr("dy", function(d) {
+              return yScale(d[curY]) + circRadius / 3;
+            })
+            .duration(300);
+        });
+        labelChange(axis, self);
+      }
+    }
+  });
