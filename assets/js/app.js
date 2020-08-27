@@ -196,3 +196,101 @@ function visualize(theData) {
 
     clickedText.classed("inactive", false).classed("active", true);
   }
+
+  // Part 3: Instantiate the Scatter Plot
+  // ====================================
+
+  xMinMax();
+  yMinMax();
+  
+  // Tell d3 to place circles in an area starting after the margin and word area.
+  var xScale = d3
+    .scaleLinear()
+    .domain([xMin, xMax])
+    .range([margin + labelArea, width - margin]);
+  var yScale = d3
+    .scaleLinear()
+    .domain([yMin, yMax])
+    // Height is inverses due to how d3 calc's y-axis placement
+    .range([height - margin - labelArea, margin]);
+  var xAxis = d3.axisBottom(xScale);
+  var yAxis = d3.axisLeft(yScale);
+
+  // Determine x and y tick counts.
+  // Note: Saved as a function for easy mobile updates.
+  function tickCount() {
+    if (width <= 500) {
+      xAxis.ticks(5);
+      yAxis.ticks(5);
+    }
+    else {
+      xAxis.ticks(10);
+      yAxis.ticks(10);
+    }
+  }
+  tickCount();
+
+  // Append the axes in group elements.
+  svg
+    .append("g")
+    .call(xAxis)
+    .attr("class", "xAxis")
+    .attr("transform", "translate(0," + (height - margin - labelArea) + ")");
+  svg
+    .append("g")
+    .call(yAxis)
+    .attr("class", "yAxis")
+    .attr("transform", "translate(" + (margin + labelArea) + ", 0)");
+
+  var theCircles = svg.selectAll("g theCircles").data(theData).enter();
+  // Append the circles for each row of data (or each state, in this case).
+  theCircles
+    .append("circle")
+    // These attr's specify location, size and class.
+    .attr("cx", function(d) {
+      return xScale(d[curX]);
+    })
+    .attr("cy", function(d) {
+      return yScale(d[curY]);
+    })
+    .attr("r", circRadius)
+    .attr("class", function(d) {
+      return "stateCircle " + d.abbr;
+    })
+    // Hover rules for show/remove tooltip and highlight
+    .on("mouseover", function(d) {
+      toolTip.show(d, this);
+      d3.select(this).style("stroke", "#323232");
+    })
+    .on("mouseout", function(d) {
+      toolTip.hide(d);
+      d3.select(this).style("stroke", "#e3e3e3");
+    });
+
+  // Match labels to circles using the abbreviations
+  theCircles
+    .append("text")
+    // Return the abbreviation to .text, which makes the text the abbreviation.
+    .text(function(d) {
+      return d.abbr;
+    })
+    .attr("dx", function(d) {
+      return xScale(d[curX]);
+    })
+    .attr("dy", function(d) {
+      // When the size of the text is the radius,
+      // adding a third of the radius to the height
+      // pushes it into the middle of the circle.
+      return yScale(d[curY]) + circRadius / 2.5;
+    })
+    .attr("font-size", circRadius)
+    .attr("class", "stateText")
+    // Hover rules for show/remove tooltip and highlight
+    .on("mouseover", function(d) {
+      toolTip.show(d);
+      d3.select("." + d.abbr).style("stroke", "#323232");
+    })
+    .on("mouseout", function(d) {
+      toolTip.hide(d);
+      d3.select("." + d.abbr).style("stroke", "#e3e3e3");
+    });
