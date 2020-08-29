@@ -1,19 +1,11 @@
 // Section 1: Pre-Data Setup
 // ===========================
 
-// Grab the width of the containing box
+// Set margin and space by grabbing the width of the containing box
 var width = parseInt(d3.select("#scatter").style("width"));
-
-// Designate the height of the graph
 var height = width - width / 3.9;
-
-// Margin spacing for graph
 var margin = 20;
-
-// space for placing words
 var labelArea = 110;
-
-// padding for the text at the bottom and left axes
 var tPadBot = 40;
 var tPadLeft = 40;
 
